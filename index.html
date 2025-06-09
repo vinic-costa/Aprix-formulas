@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Extrator de Fórmulas Aprix</title>
 
-    <!-- Typography -->
+
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-    <!-- Styles -->
     <style>
       *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
       html, body { height: 100%; font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:#f9fafb; color:#222; }
@@ -53,22 +52,18 @@
       #copy-btn:hover { background:#008a00; }
     </style>
 
-    <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-    <!-- App logic -->
     <script defer src="app.js"></script>
   </head>
   <body>
     <header>Extrator de Fórmulas Aprix</header>
 
     <main>
-      <!-- File picker -->
       <label class="file-input-label" for="file-input">
         Selecionar arquivo Excel
         <input id="file-input" type="file" accept=".xlsx,.xlsm,.xls,.csv,.ods" />
       </label>
 
-      <!-- Markdown output -->
       <pre id="output" hidden></pre>
       <button id="copy-btn">Copiar Markdown</button>
     </main>
