@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("file-input");
   const output    = document.getElementById("output");
+  const copyBtn   = document.getElementById("copy-btn");
 
   fileInput.addEventListener("change", async (e) => {
     const file = e.target.files[0];
@@ -16,15 +17,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const md  = buildMarkdown(rows);
-      const csv = buildCSV(rows);
-
-      download("relatorio_formulas.md", md);
-      download("relatorio_formulas.csv", csv);
+      const md = buildMarkdown(rows);
 
       output.textContent = md;
       output.hidden = false;
-      alert("Relatórios gerados com sucesso! 😊");
+      copyBtn.style.display = "inline-block";  
 
     } catch (err) {
       console.error(err);
@@ -32,10 +29,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  copyBtn.addEventListener("click", () => {
+    navigator.clipboard.writeText(output.textContent)
+      .then(() => copyBtn.textContent = "Copiado! ✅")
+      .catch(() => alert("Não foi possível copiar."))
+      .finally(() => setTimeout(() => (copyBtn.textContent = "Copiar Markdown"), 2000));
+  });
+
 
   function extractFormulas(workbook) {
     const rows = [];
-
     workbook.SheetNames.forEach((sheetName) => {
       const ws    = workbook.Sheets[sheetName];
       const range = XLSX.utils.decode_range(ws["!ref"]);
@@ -62,13 +65,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     });
-
     return rows;
   }
 
   function substituteRefs(formula, headers) {
     return formula
-      .replace(/^=/, "")                               
+      .replace(/^=/, "")
       .replace(/\$?[A-Z]{1,3}\$?\d+/g, (ref) => {
         const colLetter = ref.match(/[A-Z]+/)[0];
         const colIndex  = XLSX.utils.decode_col(colLetter);
@@ -77,35 +79,21 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function buildMarkdown(rows) {
-    const bySheet = groupBy(rows, "Planilha");
-    const md = ["# Relatório de Fórmulas\n"];
+    const bySheet = rows.reduce((acc, r) => {
+      (acc[r.Planilha] ||= []).push(r);
+      return acc;
+    }, {});
 
-    Object.keys(bySheet).forEach((sheet) => {
+    const md = ["# Relatório de Fórmulas\n"];
+    Object.entries(bySheet).forEach(([sheet, list]) => {
       md.push(`## ${sheet}\n`);
-      bySheet[sheet].forEach((row, idx) => {
+      list.forEach((row, idx) => {
         md.push(`### ${idx + 1}. ${row.Coluna} (${row.Endereco})\n`);
         md.push("**Fórmula**\n");
         md.push("```excel\n" + row.Formula + "\n```\n");
         md.push("---\n");
       });
     });
-
     return md.join("\n");
   }
-
-  const buildCSV = (rows) =>
-    XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(rows), { FS: ",", RS: "\n" });
-
-  function download(filename, content) {
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const href = URL.createObjectURL(blob);
-    const a    = Object.assign(document.createElement("a"), { href, download: filename });
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(href);
-  }
-
-  const groupBy = (arr, key) =>
-    arr.reduce((acc, obj) => ((acc[obj[key]] = (acc[obj[key]] || []).concat(obj)), acc), {});
 });
