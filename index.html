@@ -1,119 +1,39 @@
-/* global XLSX */
-document.addEventListener("DOMContentLoaded", () => {
-  const fileInput = document.getElementById("file-input");
-  const output    = document.getElementById("output");
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Extrator de Fórmulas Aprix</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  fileInput.addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    <style>
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f9fafb; color:#222; }
+      header { width:100%; padding:1.25rem 2rem; background:#0052cc; color:#fff; font-size:1.6rem; font-weight:700; letter-spacing:.4px; box-shadow:0 2px 4px rgba(0,0,0,.08); }
+      main { height:calc(100% - 72px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2rem; }
+      .file-input-label { padding:1.25rem 2.5rem; border-radius:.8rem; background:#0052cc; color:#fff; font-size:1.15rem; font-weight:600; cursor:pointer; transition:.22s; box-shadow:0 4px 10px rgba(0,0,0,.12); }
+      .file-input-label:hover { background:#0041a3; }
+      .file-input-label:active { transform:translateY(2px); box-shadow:0 3px 8px rgba(0,0,0,.16); }
+      #file-input { display:none; }
+      #output { width:min(90%,750px); max-height:50vh; padding:1rem; border:1px solid #e4e7eb; border-radius:.65rem; background:#fff; overflow:auto; white-space:pre-wrap; font-size:.93rem; line-height:1.45; box-shadow:0 2px 6px rgba(0,0,0,.06); }
+    </style>
 
-    try {
-      const data = await file.arrayBuffer();
-      const wb   = XLSX.read(data, { type: "array", cellFormula: true });
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
 
-      const rows = extractFormulas(wb);
-      if (!rows.length) {
-        alert("Nenhuma fórmula encontrada.");
-        return;
-      }
+    <script defer src="app.js"></script>
+  </head>
 
-      const md  = buildMarkdown(rows);
-      const csv = buildCSV(rows);
+  <body>
+    <header>Extrator de Fórmulas Aprix</header>
 
-      download("relatorio_formulas.md", md);
-      download("relatorio_formulas.csv", csv);
+    <main>
+      <label class="file-input-label" for="file-input">
+        Selecionar arquivo Excel
+        <input id="file-input" type="file" accept=".xlsx,.xlsm,.xls,.csv,.ods" />
+      </label>
 
-      output.textContent = md;
-      output.hidden = false;
-      alert("Relatórios gerados com sucesso! 😊");
-
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao processar o arquivo (veja o console).");
-    }
-  });
-
-  /* ───── Funções ─────────────────────────────────────────── */
-
-  function extractFormulas(workbook) {
-    const rows = [];
-
-    workbook.SheetNames.forEach((sheetName) => {
-      const ws    = workbook.Sheets[sheetName];
-      const range = XLSX.utils.decode_range(ws["!ref"]);
-
-      /* cabeçalhos (linha 0) */
-      const headers = {};
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const addr = XLSX.utils.encode_cell({ r: 0, c: C });
-        const cell = ws[addr];
-        headers[C] = cell ? String(cell.v).replace(/\n/g, " ").trim() : `Col_${C}`;
-      }
-
-      /* percorre todas as células do range */
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const addr = XLSX.utils.encode_cell({ r: R, c: C });
-          const cell = ws[addr];
-          if (cell && cell.f) {
-            rows.push({
-              Planilha: sheetName,
-              Endereco: addr,
-              Coluna: headers[C] || "",
-              Formula: substituteRefs(cell.f, headers), // já sem '='
-            });
-          }
-        }
-      }
-    });
-
-    return rows;
-  }
-
-  /* troca A1, B2… pelo nome da coluna */
-  function substituteRefs(formula, headers) {
-    return formula
-      .replace(/^=/, "")                                   // remove '='
-      .replace(/\$?[A-Z]{1,3}\$?\d+/g, (ref) => {
-        const colLetter = ref.match(/[A-Z]+/)[0];
-        const colIndex  = XLSX.utils.decode_col(colLetter);
-        return headers[colIndex] || colLetter;
-      });
-  }
-
-  /* Markdown simples */
-  function buildMarkdown(rows) {
-    const bySheet = groupBy(rows, "Planilha");
-    const md = ["# Relatório de Fórmulas\n"];
-
-    Object.keys(bySheet).forEach((sheet) => {
-      md.push(`## ${sheet}\n`);
-      bySheet[sheet].forEach((row, idx) => {
-        md.push(`### ${idx + 1}. ${row.Coluna} (${row.Endereco})\n`);
-        md.push("**Fórmula**\n");
-        md.push("```excel\n" + row.Formula + "\n```\n");
-        md.push("---\n");
-      });
-    });
-
-    return md.join("\n");
-  }
-
-  /* CSV via SheetJS util */
-  const buildCSV = (rows) =>
-    XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(rows), { FS: ",", RS: "\n" });
-
-  /* descarga de arquivos */
-  function download(filename, content) {
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const href = URL.createObjectURL(blob);
-    const a    = Object.assign(document.createElement("a"), { href, download: filename });
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(href);
-  }
-
-  const groupBy = (arr, key) =>
-    arr.reduce((acc, obj) => ((acc[obj[key]] = (acc[obj[key]] || []).concat(obj)), acc), {});
-});
+      <pre id="output" hidden></pre>
+    </main>
+  </body>
+</html>
