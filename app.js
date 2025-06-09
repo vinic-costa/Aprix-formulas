@@ -61,7 +61,6 @@ document.addEventListener("DOMContentLoaded", () => {
           if (cell && cell.f) {
             rows.push({
               Planilha: sheetName,
-              Endereco: addr,
               Coluna: headers[C] || "",
               Formula: substituteRefs(cell.f, headers) 
             });
