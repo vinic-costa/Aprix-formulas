@@ -1,10 +1,7 @@
-/* global XLSX */
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("file-input");
   const output    = document.getElementById("output");
   const copyBtn   = document.getElementById("copy-btn");
-
-  /* ───────── Upload ─────────────────────────────────────── */
   fileInput.addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -31,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  /* ───────── Copiar Markdown ────────────────────────────── */
+
   copyBtn.addEventListener("click", () => {
     navigator.clipboard.writeText(output.textContent)
       .then(() => copyBtn.textContent = "Copiado! ✅")
@@ -39,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .finally(() => setTimeout(() => (copyBtn.textContent = "Copiar Markdown"), 2000));
   });
 
-  /* ───────── Helpers ────────────────────────────────────── */
+
 
   function extractFormulas(workbook) {
     const rows = [];
@@ -48,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const ws    = workbook.Sheets[sheetName];
       const range = XLSX.utils.decode_range(ws["!ref"]);
 
-      /* Cabeçalhos da linha 1 */
+
       const headers = {};
       for (let C = range.s.c; C <= range.e.c; ++C) {
         const addr = XLSX.utils.encode_cell({ r: 0, c: C });
@@ -56,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
         headers[C] = cell ? String(cell.v).replace(/\n/g, " ").trim() : `Col_${C}`;
       }
 
-      /* Percorre todas as células em busca de fórmulas */
+
       for (let R = range.s.r; R <= range.e.r; ++R) {
         for (let C = range.s.c; C <= range.e.c; ++C) {
           const addr = XLSX.utils.encode_cell({ r: R, c: C });
@@ -66,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
               Planilha: sheetName,
               Endereco: addr,
               Coluna: headers[C] || "",
-              Formula: substituteRefs(cell.f, headers) // sem '='
+              Formula: substituteRefs(cell.f, headers) 
             });
           }
         }
@@ -76,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return rows;
   }
 
-  /* Substitui A1, B2… pelo nome da coluna */
+
   function substituteRefs(formula, headers) {
     return formula
       .replace(/^=/, "")
@@ -87,7 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  /* Gera Markdown agrupado por planilha */
   function buildMarkdown(rows) {
     const grouped = rows.reduce((acc, r) => {
       (acc[r.Planilha] ||= []).push(r);
