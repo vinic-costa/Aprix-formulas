@@ -4,36 +4,73 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Extrator de Fórmulas Aprix</title>
+
+    <!-- Typography -->
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
+    <!-- Styles -->
     <style>
       *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body { height: 100%; font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f9fafb; color:#222; }
-      header { width:100%; padding:1.25rem 2rem; background:#0052cc; color:#fff; font-size:1.6rem; font-weight:700; letter-spacing:.4px; box-shadow:0 2px 4px rgba(0,0,0,.08); }
-      main { height:calc(100% - 72px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2rem; }
-      .file-input-label { padding:1.25rem 2.5rem; border-radius:.8rem; background:#0052cc; color:#fff; font-size:1.15rem; font-weight:600; cursor:pointer; transition:.22s; box-shadow:0 4px 10px rgba(0,0,0,.12); }
+      html, body { height: 100%; font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:#f9fafb; color:#222; }
+
+      header {
+        width: 100%; padding: 1.25rem 2rem; background:#0052cc; color:#fff;
+        font-size: 1.6rem; font-weight: 700; letter-spacing: .4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.08);
+      }
+
+      main {
+        height: calc(100% - 72px);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 1.5rem; padding: 0 1rem;
+      }
+
+      .file-input-label {
+        padding: 1.25rem 2.5rem; border-radius: .8rem; background:#0052cc; color:#fff;
+        font-size: 1.15rem; font-weight: 600; cursor: pointer;
+        transition: background .22s ease, transform .12s ease, box-shadow .22s ease;
+        box-shadow: 0 4px 10px rgba(0,0,0,.12);
+      }
       .file-input-label:hover { background:#0041a3; }
-      .file-input-label:active { transform:translateY(2px); box-shadow:0 3px 8px rgba(0,0,0,.16); }
+      .file-input-label:active { transform: translateY(2px); box-shadow: 0 3px 8px rgba(0,0,0,.16); }
+
       #file-input { display:none; }
-      #output { width:min(90%,750px); max-height:50vh; padding:1rem; border:1px solid #e4e7eb; border-radius:.65rem; background:#fff; overflow:auto; white-space:pre-wrap; font-size:.93rem; line-height:1.45; box-shadow:0 2px 6px rgba(0,0,0,.06); }
+
+      #output {
+        width: min(90%, 800px); max-height: 50vh;
+        padding: 1rem; border: 1px solid #e4e7eb; border-radius: .65rem; background:#fff;
+        overflow: auto; white-space: pre-wrap; font-size: .93rem; line-height: 1.45;
+        box-shadow: 0 2px 6px rgba(0,0,0,.06);
+      }
+
+      #copy-btn {
+        display: none; /* hidden by default */
+        padding: .75rem 1.5rem; border: none; border-radius: .6rem; cursor: pointer;
+        background:#00a100; color:#fff; font-weight:600; font-size:1rem;
+        transition: background .18s ease;
+      }
+      #copy-btn:hover { background:#008a00; }
     </style>
 
+    <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-
+    <!-- App logic -->
     <script defer src="app.js"></script>
   </head>
-
   <body>
     <header>Extrator de Fórmulas Aprix</header>
 
     <main>
+      <!-- File picker -->
       <label class="file-input-label" for="file-input">
         Selecionar arquivo Excel
         <input id="file-input" type="file" accept=".xlsx,.xlsm,.xls,.csv,.ods" />
       </label>
 
+      <!-- Markdown output -->
       <pre id="output" hidden></pre>
+      <button id="copy-btn">Copiar Markdown</button>
     </main>
   </body>
 </html>
