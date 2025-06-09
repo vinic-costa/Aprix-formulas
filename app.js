@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.entries(grouped).forEach(([sheet, list]) => {
       md.push(`## ${sheet}\n`);
       list.forEach((row, idx) => {
-        md.push(`### ${idx + 1}. ${row.Coluna} (${row.Endereco})\n`);
+        md.push(`### ${idx + 1}. ${row.Coluna};
         md.push("**Fórmula**\n");
         md.push("```excel\n" + row.Formula + "\n```\n");
         md.push("---\n");
