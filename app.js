@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (err) {
       console.error(err);
-      alert("Erro ao processar o arquivo. Veja o console para detalhes.");
+      alert("Erro ao processar o arquivo (veja o console).");
     }
   });
 
@@ -37,14 +37,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const rows = [];
 
     workbook.SheetNames.forEach((sheetName) => {
-      const ws     = workbook.Sheets[sheetName];
-      const range  = XLSX.utils.decode_range(ws["!ref"]);
+      const ws    = workbook.Sheets[sheetName];
+      const range = XLSX.utils.decode_range(ws["!ref"]);
 
       const headers = {};
       for (let C = range.s.c; C <= range.e.c; ++C) {
         const addr = XLSX.utils.encode_cell({ r: 0, c: C });
         const cell = ws[addr];
-        headers[C] = cell ? String(cell.v).replace(/\\n/g, \" \").trim() : `Col_${C}`;
+        headers[C] = cell ? String(cell.v).replace(/\n/g, " ").trim() : `Col_${C}`;
       }
 
       for (let R = range.s.r; R <= range.e.r; ++R) {
@@ -52,24 +52,24 @@ document.addEventListener("DOMContentLoaded", () => {
           const addr = XLSX.utils.encode_cell({ r: R, c: C });
           const cell = ws[addr];
           if (cell && cell.f) {
-            const header = headers[C] || \"\";
             rows.push({
               Planilha: sheetName,
               Endereco: addr,
-              Coluna: header,
-              Formula: substituteRefs(cell.f, headers),
+              Coluna: headers[C] || "",
+              Formula: substituteRefs(cell.f, headers), 
             });
           }
         }
       }
     });
+
     return rows;
   }
 
   function substituteRefs(formula, headers) {
     return formula
-      .replace(/^=/, \"\")                       // remove '=' inicial
-      .replace(/\\$?[A-Z]{1,3}\\$?\\d+/g, (ref) => {
+      .replace(/^=/, "")                               
+      .replace(/\$?[A-Z]{1,3}\$?\d+/g, (ref) => {
         const colLetter = ref.match(/[A-Z]+/)[0];
         const colIndex  = XLSX.utils.decode_col(colLetter);
         return headers[colIndex] || colLetter;
@@ -77,33 +77,29 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function buildMarkdown(rows) {
-    const bySheet = groupBy(rows, \"Planilha\");
-    const md = [\"# Relatório de Fórmulas\\n\"];
+    const bySheet = groupBy(rows, "Planilha");
+    const md = ["# Relatório de Fórmulas\n"];
+
     Object.keys(bySheet).forEach((sheet) => {
-      md.push(`## ${sheet}\\n`);
+      md.push(`## ${sheet}\n`);
       bySheet[sheet].forEach((row, idx) => {
-        md.push(`### ${idx + 1}. ${row.Coluna} (${row.Endereco})\\n`);
-        md.push(\"**Fórmula**\\n`);
-        md.push(\"```excel\\n\" + row.Formula + \"\\n```\\n\"); // sem '='
-        md.push(\"---\\n\");
+        md.push(`### ${idx + 1}. ${row.Coluna} (${row.Endereco})\n`);
+        md.push("**Fórmula**\n");
+        md.push("```excel\n" + row.Formula + "\n```\n");
+        md.push("---\n");
       });
     });
-    return md.join(\"\\n\");
+
+    return md.join("\n");
   }
 
-  function buildCSV(rows) {
-    const ws  = XLSX.utils.json_to_sheet(rows);
-    const csv = XLSX.utils.sheet_to_csv(ws, { FS: \",\", RS: \"\\n\" });
-    return csv;
-  }
+  const buildCSV = (rows) =>
+    XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(rows), { FS: ",", RS: "\n" });
 
   function download(filename, content) {
-    const blob = new Blob([content], { type: \"text/plain;charset=utf-8\" });
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
     const href = URL.createObjectURL(blob);
-    const a    = Object.assign(document.createElement(\"a\"), {
-      href,
-      download: filename,
-    });
+    const a    = Object.assign(document.createElement("a"), { href, download: filename });
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
